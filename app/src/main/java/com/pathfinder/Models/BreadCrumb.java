@@ -6,6 +6,7 @@ import java.io.Serializable;
  * Created by vrajdelhivala on 3/26/18.
  */
 
+//BreadCrumb Data Model that saves the attributes mentioned below
 public class BreadCrumb implements Serializable{
 
     double latitude=0;

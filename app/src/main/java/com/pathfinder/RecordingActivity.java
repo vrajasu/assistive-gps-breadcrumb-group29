@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+//activity that records a route, dropping breadcrumbs as and when the user instructs.
 public class RecordingActivity extends AppCompatActivity implements View.OnClickListener {
 
     Button btn_drop_breadcrumb, btn_save_and_exit;
@@ -43,7 +44,7 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
     boolean isSaving=false;
     MediaRecorderHelper mediaRecorderHelper;
 
-    Route route;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,8 +72,9 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
     public void onClick(View view) {
 
         switch (view.getId()) {
+            //On clicking the drop button the recording starts and the text of this button is changed to Stop recording. On Clicked stop recording the details of this
+            //breadcrumb are saved on file.
             case R.id.btn_drop_breadcrumb:
-//                Toast.makeText(RecordingActivity.this, "Confirmation", Toast.LENGTH_LONG).show();
                 if(!isRecording) {
                     try {
                         locationProviderClient.getLastLocation().addOnSuccessListener(RecordingActivity.this, new OnSuccessListener<Location>() {
@@ -112,6 +114,9 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
             case R.id.btn_end_save:
                 //can put if condition for a minimum number of breadcrumbs
 //                route = new Route(breadCrumbs,"123","");
+
+                //clicking this once starts the recording for the Route label and then clicking it again stop route label recording
+                // and saves the route to the file.
                 if(!isSaving)
                 {
                     String audioPath = fileLocationAudio+String.valueOf(System.currentTimeMillis());
@@ -132,6 +137,7 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
                 break;
         }
     }
+    //get the address from Location to store in Breadcrumb
     public String getLocationAddress(double latitude,double longitude)
     {
         Geocoder geocoder = new Geocoder(RecordingActivity.this, Locale.getDefault());
@@ -147,6 +153,7 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
         }
         return "err";
     }
+    //saving the route to the file.
     private void saveRouteToFile(String route_id,String route_name_audio_path)
     {
         try {
@@ -161,7 +168,7 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
             ex.printStackTrace();
         }
     }
-    //currently volume up doesnt work
+    //currently volume up doesnt work, we want a better way to stop audio recordings.
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         int action = event.getAction();

@@ -13,6 +13,8 @@ import java.util.List;
  * Created by vrajdelhivala on 4/2/18.
  */
 
+// Route Data Model that saves the attributes mentioned below
+
 public class Route implements Serializable {
 
     List<BreadCrumb> wholeRoute = new ArrayList<>();

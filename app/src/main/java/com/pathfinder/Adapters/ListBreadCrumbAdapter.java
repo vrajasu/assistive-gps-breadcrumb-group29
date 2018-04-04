@@ -23,6 +23,7 @@ import java.util.List;
  * Created by vrajdelhivala on 4/3/18.
  */
 
+//Adapter that helps to list all breadcrumbs in a route.
 public class ListBreadCrumbAdapter extends RecyclerView.Adapter<ListBreadCrumbAdapter.ViewHolder> {
 
     Context context;
@@ -31,7 +32,6 @@ public class ListBreadCrumbAdapter extends RecyclerView.Adapter<ListBreadCrumbAd
     public ListBreadCrumbAdapter(Context context , List<BreadCrumb> breadCrumbs) {
         this.context=context;
         this.breadCrumbs=breadCrumbs;
-        Log.d("Size",""+breadCrumbs.size());
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
@@ -44,7 +44,6 @@ public class ListBreadCrumbAdapter extends RecyclerView.Adapter<ListBreadCrumbAd
             super(v);
             tv_route_id = (TextView)v.findViewById(R.id.tv_item_route_id);
             ll_item_route=(LinearLayout)v.findViewById(R.id.ll_item_route);
-
 
         }
 
@@ -67,16 +66,19 @@ public class ListBreadCrumbAdapter extends RecyclerView.Adapter<ListBreadCrumbAd
 
         holder.tv_route_id.setText("Bread Crumb "+(position+1)+" Street :"+breadCrumb.getStreetName());
         holder.ll_item_route.setContentDescription("Breadcrumb "+(position+1)+" and Street Name :"+breadCrumb.getStreetName());
+        //play the audio saved for this breadcrumb
         holder.ll_item_route.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                playRouteName(breadCrumb.getAudioPath()+".3gp");
+                playBreadcrumb(breadCrumb.getAudioPath()+".3gp");
 
             }
         });
+
         holder.ll_item_route.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
+                    //for later implementation
 //                Intent intent = new Intent(context, AllBreadcrumbsActivity.class);
 //                intent.putExtra("ALL_BREADCRUMBS", (Serializable) route.getWholeRoute());
 //                context.startActivity(intent);
@@ -91,7 +93,8 @@ public class ListBreadCrumbAdapter extends RecyclerView.Adapter<ListBreadCrumbAd
     public int getItemCount() {
         return breadCrumbs.size();
     }
-    private void playRouteName(String route_name_path) {
+    //function that helps play the audip
+    private void playBreadcrumb(String route_name_path) {
         mediaPlayer = new MediaPlayer();
         try {
             mediaPlayer.setDataSource(route_name_path);

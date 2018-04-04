@@ -8,7 +8,7 @@ import java.io.IOException;
 /**
  * Created by vrajdelhivala on 3/26/18.
  */
-
+//media recorder to help with audio recording and saving those files.
 public class MediaRecorderHelper
 {
     String file_path_and_name;

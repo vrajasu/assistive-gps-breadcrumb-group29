@@ -25,6 +25,7 @@ import java.util.List;
 /**
  * Created by vrajdelhivala on 4/2/18.
  */
+//Adapter that helps to list all routes present in file system.
 
 public class ListRouteAdapter extends RecyclerView.Adapter<ListRouteAdapter.ViewHolder>  {
     private List<Route> allRoutes;
@@ -71,13 +72,14 @@ public class ListRouteAdapter extends RecyclerView.Adapter<ListRouteAdapter.View
 
         holder.tv_route_id.setText("Route "+(position+1));
         holder.ll_item_route.setContentDescription("Route "+(position+1));
+        //click for route name
         holder.ll_item_route.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 playRouteName(route.getRoute_name_audio_path()+".3gp");
-
             }
         });
+        //long press to open all breadcrumbs in the application
         holder.ll_item_route.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
@@ -96,6 +98,8 @@ public class ListRouteAdapter extends RecyclerView.Adapter<ListRouteAdapter.View
     public int getItemCount() {
         return allRoutes.size();
     }
+
+    //play audio file that contains the route label
     private void playRouteName(String route_name_path) {
         mediaPlayer = new MediaPlayer();
         try {

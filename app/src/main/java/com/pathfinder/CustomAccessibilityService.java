@@ -9,7 +9,7 @@ import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Toast;
 
-//unsued c
+//unsued accessibility service, might use it in the following implementations.
 public class CustomAccessibilityService extends AccessibilityService {
     public CustomAccessibilityService() {
     }

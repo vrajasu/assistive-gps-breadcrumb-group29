@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:weightSum="2"
+        android:orientation="vertical"
+        >
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/btn_drop_breadcrumb"
+            android:text="Drop Breadcrumb"
+            android:contentDescription="Drop Breadcrumb"
+            android:textSize="30dp"
+            />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/btn_end_save"
+            android:text="End and Save Route"
+            android:contentDescription="End and Save Route"
+            android:textSize="30dp"/>
+
+
+    </LinearLayout>
+
+
+</RelativeLayout>

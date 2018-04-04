@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.pathfinder">
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <service
+            android:name=".CustomAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/service_config" />
+        </service>
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation"
+            android:label=""
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".RecordingActivity"
+            android:configChanges="orientation"
+            android:label="Recording Route"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ConfirmStartRecording"
+            android:configChanges="orientation"
+            android:label="Confirm Start Recording"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".AllRoutesActivity"
+            android:configChanges="orientation"
+            android:label="Display All Routes"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".AllBreadcrumbsActivity"
+            android:configChanges="orientation"
+            android:label="Display All Breadcrumbs"
+            android:screenOrientation="portrait" />
+
+    </application>
+
+</manifest>

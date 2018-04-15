@@ -1,11 +1,13 @@
 package com.pathfinder;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Environment;
 import android.speech.tts.TextToSpeech;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -25,11 +27,11 @@ import java.util.List;
 import java.util.Locale;
 
 //entry point of the application.
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
 
     //declaring UI elements.
-    Button btn_new_route,btn_edit_route,btn_saved_route,btn_current_street;
+    Button btn_new_route, btn_edit_route, btn_saved_route, btn_current_street;
     //declaring Location provider to extact Latitude and Longitude.
 
     private FusedLocationProviderClient locationProviderClient;
@@ -43,17 +45,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //making sure the screen doesn't power off
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        btn_new_route = (Button)findViewById(R.id.btn_new_route);
-        btn_edit_route = (Button)findViewById(R.id.btn_edit_route);
-        btn_saved_route = (Button)findViewById(R.id.btn_saved_route);
-        btn_current_street = (Button)findViewById(R.id.btn_current_street);
+        btn_new_route = (Button) findViewById(R.id.btn_new_route);
+        btn_edit_route = (Button) findViewById(R.id.btn_edit_route);
+        btn_saved_route = (Button) findViewById(R.id.btn_saved_route);
+        btn_current_street = (Button) findViewById(R.id.btn_current_street);
 
         //initializing the Text to speech engine.
-        tts=new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
+        tts = new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
-                Log.d("TTS","Hello!1");
-                if(status != TextToSpeech.ERROR) {
+                Log.d("TTS", "Hello!1");
+                if (status != TextToSpeech.ERROR) {
                     tts.setLanguage(Locale.ENGLISH);
                     tts.speak("Hello There, Welcome to Path Finder Home!", TextToSpeech.QUEUE_FLUSH, null, null);
                 }
@@ -68,7 +70,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-
 
 
         //creating app storage directory on first app run
@@ -87,8 +88,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
 
-
     }
+
     //on click handlers for the button
     @Override
     public void onClick(View view) {
@@ -96,26 +97,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Intent intent;
         switch (view.getId()) {
             case R.id.btn_new_route:
-                intent  = new Intent(MainActivity.this,ConfirmStartRecording.class);
+                intent = new Intent(MainActivity.this, ConfirmStartRecording.class);
                 startActivity(intent);
                 break;
             case R.id.btn_saved_route:
-                intent = new Intent(MainActivity.this,AllRoutesActivity.class);
+                intent = new Intent(MainActivity.this, AllRoutesActivity.class);
                 startActivity(intent);
             case R.id.btn_current_street:
                 getLocation();
                 break;
+            case R.id.btn_edit_route:
+                intent = new Intent(MainActivity.this, AllRoutesActivity.class);
+                intent.putExtra("IS_EDIT", true);
+                startActivity(intent);
         }
     }
+
     //Fetches location and passes to getAddress method to retrieve a street name
-    public void getLocation()
-    {
+    public void getLocation() {
         try {
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
             locationProviderClient.getLastLocation().addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
-                    String address = getLocationAddress(location.getLatitude(),location.getLongitude());
-                    tts.speak(address, TextToSpeech.QUEUE_FLUSH, null,null);
+                    String address = getLocationAddress(location.getLatitude(), location.getLongitude());
+                    tts.speak(address, TextToSpeech.QUEUE_FLUSH, null, null);
                     btn_current_street.setText(address);
 
                 }

@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.pathfinder.AllBreadcrumbsActivity;
+import com.pathfinder.MediaRecorderHelper;
 import com.pathfinder.Models.BreadCrumb;
 import com.pathfinder.Models.Route;
 import com.pathfinder.R;
@@ -64,7 +65,7 @@ public class ListBreadCrumbAdapter extends RecyclerView.Adapter<ListBreadCrumbAd
         final BreadCrumb breadCrumb = breadCrumbs.get(position);
 
 
-        holder.tv_route_id.setText("Bread Crumb "+(position+1)+" Street :"+breadCrumb.getStreetName());
+        holder.tv_route_id.setText("Bread Crumb "+(position+1)+" Street :"+breadCrumb.getStreetName()+" "+breadCrumb.getLatitude()+" "+breadCrumb.getLongitude());
         holder.ll_item_route.setContentDescription("Breadcrumb "+(position+1)+" and Street Name :"+breadCrumb.getStreetName());
         //play the audio saved for this breadcrumb
         holder.ll_item_route.setOnClickListener(new View.OnClickListener() {
@@ -95,12 +96,14 @@ public class ListBreadCrumbAdapter extends RecyclerView.Adapter<ListBreadCrumbAd
     }
     //function that helps play the audip
     private void playBreadcrumb(String route_name_path) {
-        mediaPlayer = new MediaPlayer();
+        mediaPlayer = MediaRecorderHelper.getInstance();
+        mediaPlayer.reset();
         try {
             mediaPlayer.setDataSource(route_name_path);
             mediaPlayer.prepare();
             mediaPlayer.start();
         } catch (Exception e) {
+            e.printStackTrace();
             Log.e("Media Play", "prepare() failed");
         }
     }

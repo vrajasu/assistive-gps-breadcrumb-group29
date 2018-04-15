@@ -1,5 +1,6 @@
 package com.pathfinder;
 
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.util.Log;
 
@@ -13,9 +14,18 @@ public class MediaRecorderHelper
 {
     String file_path_and_name;
     MediaRecorder mRecorder;
+    static MediaPlayer  mediaPlayer;
     public MediaRecorderHelper(String file_path_and_name)
     {
         this.file_path_and_name=file_path_and_name;
+    }
+    public static MediaPlayer getInstance()
+    {
+        if(mediaPlayer==null)
+        {
+            mediaPlayer = new MediaPlayer();
+        }
+        return mediaPlayer;
     }
     public void startRecording() {
         mRecorder = new MediaRecorder();

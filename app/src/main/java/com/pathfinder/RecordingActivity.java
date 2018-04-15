@@ -4,7 +4,9 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Environment;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -16,6 +18,10 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.pathfinder.Models.BreadCrumb;
@@ -43,6 +49,11 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
     boolean isRecording = false;
     boolean isSaving=false;
     MediaRecorderHelper mediaRecorderHelper;
+    private LocationCallback mLocationCallback;
+    LocationManager mLocationManager;
+    Location location=null;
+    TextToSpeech tts;
+    boolean ttsInitialized = false;
 
 
 
@@ -56,6 +67,15 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+        tts = new TextToSpeech(RecordingActivity.this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status != TextToSpeech.ERROR) {
+                    tts.setLanguage(Locale.ENGLISH);
+                    ttsInitialized=true;
+                }
+            }
+        });
 
         btn_drop_breadcrumb = (Button) findViewById(R.id.btn_drop_breadcrumb);
         btn_save_and_exit = (Button) findViewById(R.id.btn_end_save);
@@ -63,10 +83,35 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
         btn_drop_breadcrumb.setOnClickListener(this);
         btn_save_and_exit.setOnClickListener(this);
 
-        locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0.0f, new android.location.LocationListener() {
+            @Override
+            public void onLocationChanged(Location loc) {
+                location = loc;
+
+            }
+
+            @Override
+            public void onStatusChanged(String s, int i, Bundle bundle) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String s) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String s) {
+
+            }
+        });
 
 
     }
+
+
 
     @Override
     public void onClick(View view) {
@@ -77,30 +122,31 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
             case R.id.btn_drop_breadcrumb:
                 if(!isRecording) {
                     try {
-                        locationProviderClient.getLastLocation().addOnSuccessListener(RecordingActivity.this, new OnSuccessListener<Location>() {
-                            @Override
-                            public void onSuccess(Location location) {
-                                // Got last known location. In some rare situations this can be null.
-                                if (location != null) {
-                                    Log.d("TAG", location.getLatitude() + " : " + location.getLongitude());
+                        if(location!=null) {
+                            String audioPath = fileLocationAudio + String.valueOf(System.currentTimeMillis());
+                            mediaRecorderHelper = new MediaRecorderHelper(audioPath);
+                            mediaRecorderHelper.startRecording();
 
-                                }
-                                String audioPath = fileLocationAudio+String.valueOf(System.currentTimeMillis());
-                                mediaRecorderHelper = new MediaRecorderHelper(audioPath);
-                                mediaRecorderHelper.startRecording();
-
-                                String street = getLocationAddress(location.getLatitude(),location.getLongitude());
-                                BreadCrumb bread = new BreadCrumb(location.getLatitude(), location.getLongitude(),audioPath,street);
-                                breadCrumbs.add(bread);
-
-
+                            String street = getLocationAddress(location.getLatitude(), location.getLongitude());
+                            BreadCrumb bread = new BreadCrumb(location.getLatitude(), location.getLongitude(), audioPath, street);
+                            breadCrumbs.add(bread);
+                            isRecording=true;
+                            btn_drop_breadcrumb.setText("Stop Recording");
+                            btn_drop_breadcrumb.setContentDescription("Stop Recording");
+                        }
+                        else
+                        {
+                            if(ttsInitialized)
+                            {
+                                tts.speak("Location Fix not acquired. Please try again in 2 seconds", TextToSpeech.QUEUE_FLUSH, null, null);
                             }
-                        });
+                        }
+
+
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    btn_drop_breadcrumb.setText("Stop Recording");
-                    btn_drop_breadcrumb.setContentDescription("Stop Recording");
+
 
                 }
                 else
@@ -108,8 +154,8 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
                     mediaRecorderHelper.stopRecording();
                     btn_drop_breadcrumb.setText("Drop Breadcrumb");
                     btn_drop_breadcrumb.setContentDescription("Drop Breadcrumb");
+                    isRecording=false;
                 }
-                isRecording=!isRecording;
                 break;
             case R.id.btn_end_save:
                 //can put if condition for a minimum number of breadcrumbs
@@ -197,6 +243,41 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
             default:
                 return super.dispatchKeyEvent(event);
         }
+    }
+    @Override
+    protected void onResume() {
+
+        if(tts==null) {
+            tts = new TextToSpeech(RecordingActivity.this, new TextToSpeech.OnInitListener() {
+                @Override
+                public void onInit(int status) {
+                    if (status != TextToSpeech.ERROR) {
+                        tts.setLanguage(Locale.ENGLISH);
+                        ttsInitialized=true;
+                    }
+                }
+            });
+        }
+        super.onResume();
+
+    }
+
+
+
+    @Override
+    public void onStop() {
+        if (tts != null) {
+            tts.stop();
+        }
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (tts != null) {
+            tts.shutdown();
+        }
+        super.onDestroy();
     }
 
 

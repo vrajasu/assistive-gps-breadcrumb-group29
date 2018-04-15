@@ -30,6 +30,7 @@ public class AllRoutesActivity extends AppCompatActivity {
     List<Route> allRoutes = new ArrayList<>();
 
     TextView tv_no_routes;
+    boolean isEditable = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +40,11 @@ public class AllRoutesActivity extends AppCompatActivity {
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_all_routes);
         tv_no_routes = (TextView)findViewById(R.id.tv_no_routes);
+
+        if(getIntent().hasExtra("IS_EDIT"))
+        {
+            isEditable=true;
+        }
 
 
         mRecyclerView.setHasFixedSize(true);
@@ -52,7 +58,7 @@ public class AllRoutesActivity extends AppCompatActivity {
             tv_no_routes.setVisibility(View.GONE);
             mRecyclerView.setVisibility(View.VISIBLE);
 
-            mAdapter = new ListRouteAdapter(allRoutes,AllRoutesActivity.this);
+            mAdapter = new ListRouteAdapter(allRoutes,AllRoutesActivity.this,isEditable);
             mRecyclerView.setAdapter(mAdapter);
 
         }
@@ -94,4 +100,29 @@ public class AllRoutesActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onResume() {
+
+        allRoutes.clear();
+        retrieveAllRoutes();
+        Log.d("All Routes Size",allRoutes.size()+"");
+        if (allRoutes.size() > 0) {
+            tv_no_routes.setVisibility(View.GONE);
+            mRecyclerView.setVisibility(View.VISIBLE);
+            mAdapter = new ListRouteAdapter(allRoutes, AllRoutesActivity.this, isEditable);
+            mRecyclerView.setAdapter(mAdapter);
+
+        } else {
+            mRecyclerView.setVisibility(View.GONE);
+            tv_no_routes.setVisibility(View.VISIBLE);
+            tv_no_routes.setFocusable(true);
+        }
+        super.onResume();
+
+    }
+    @Override
+    protected void onPause(){
+        MediaRecorderHelper.getInstance().pause();
+        super.onPause();
+    }
 }

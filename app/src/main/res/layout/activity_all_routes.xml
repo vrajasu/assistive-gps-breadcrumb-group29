@@ -6,12 +6,22 @@
     android:layout_height="match_parent"
     tools:context="com.pathfinder.AllRoutesActivity">
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="100dip"
+        android:id="@+id/btn_delete_route"
+        android:visibility="gone"
+        android:contentDescription="Delete Route"
+        android:text="Delete Route"
+        />
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recycler_view_all_routes"
         android:scrollbars="vertical"
         android:visibility="gone"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout_below="@+id/btn_delete_route" />
 
     <TextView
         android:layout_width="match_parent"

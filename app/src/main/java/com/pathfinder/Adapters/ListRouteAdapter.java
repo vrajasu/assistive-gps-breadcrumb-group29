@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.pathfinder.AllBreadcrumbsActivity;
 import com.pathfinder.MainActivity;
+import com.pathfinder.MediaRecorderHelper;
 import com.pathfinder.Models.Route;
 import com.pathfinder.R;
 
@@ -30,6 +31,7 @@ import java.util.List;
 public class ListRouteAdapter extends RecyclerView.Adapter<ListRouteAdapter.ViewHolder>  {
     private List<Route> allRoutes;
     MediaPlayer mediaPlayer;
+    boolean isEditable=false;
     Context context;
 
 
@@ -49,9 +51,10 @@ public class ListRouteAdapter extends RecyclerView.Adapter<ListRouteAdapter.View
 
     }
 
-    public ListRouteAdapter(List<Route> allRoutes, Context context) {
+    public ListRouteAdapter(List<Route> allRoutes, Context context,boolean isEditable) {
         this.allRoutes = allRoutes;
         this.context =context;
+        this.isEditable=isEditable;
     }
 
     @Override
@@ -84,6 +87,9 @@ public class ListRouteAdapter extends RecyclerView.Adapter<ListRouteAdapter.View
             @Override
             public boolean onLongClick(View view) {
                 Intent intent = new Intent(context, AllBreadcrumbsActivity.class);
+                intent.putExtra("IS_EDIT",isEditable);
+                intent.putExtra("ROUTE_PATH",route.getRoute_id());
+                intent.putExtra("ROUTE_AUDIO_PATH",route.getRoute_name_audio_path());
                 intent.putExtra("ALL_BREADCRUMBS", (Serializable) route.getWholeRoute());
                 context.startActivity(intent);
                 return false;
@@ -101,13 +107,15 @@ public class ListRouteAdapter extends RecyclerView.Adapter<ListRouteAdapter.View
 
     //play audio file that contains the route label
     private void playRouteName(String route_name_path) {
-        mediaPlayer = new MediaPlayer();
+        mediaPlayer = MediaRecorderHelper.getInstance();
+        mediaPlayer.reset();
         try {
             mediaPlayer.setDataSource(route_name_path);
             mediaPlayer.prepare();
             mediaPlayer.start();
         } catch (Exception e) {
             Log.e("Media Play", "prepare() failed");
+            e.printStackTrace();
         }
     }
 }

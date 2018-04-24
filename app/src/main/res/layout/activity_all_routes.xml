@@ -11,6 +11,7 @@
         android:layout_height="100dip"
         android:id="@+id/btn_delete_route"
         android:visibility="gone"
+        android:textSize="30dip"
         android:contentDescription="Delete Route"
         android:text="Delete Route"
         />

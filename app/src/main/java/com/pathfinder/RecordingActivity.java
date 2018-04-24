@@ -1,5 +1,6 @@
 package com.pathfinder;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -85,31 +86,32 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
 
         mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0.0f, new android.location.LocationListener() {
-            @Override
-            public void onLocationChanged(Location loc) {
-                location = loc;
-
-            }
-
-            @Override
-            public void onStatusChanged(String s, int i, Bundle bundle) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String s) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String s) {
-
-            }
-        });
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0.0f, locationListener);
 
 
     }
+    public android.location.LocationListener locationListener = new android.location.LocationListener() {
+        @Override
+        public void onLocationChanged(Location loc) {
+            location = loc;
+            Log.d("Location Update",""+loc.getLatitude()+","+loc.getLongitude());
+        }
+
+        @Override
+        public void onStatusChanged(String s, int i, Bundle bundle) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String s) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String s) {
+
+        }
+    };
 
 
 
@@ -132,7 +134,7 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
                             breadCrumbs.add(bread);
                             isRecording=true;
                             btn_drop_breadcrumb.setText("Stop Recording");
-                            btn_drop_breadcrumb.setContentDescription("Stop Recording");
+//                            btn_drop_breadcrumb.setContentDescription("Stop Recording");
                         }
                         else
                         {
@@ -153,7 +155,8 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
                 {
                     mediaRecorderHelper.stopRecording();
                     btn_drop_breadcrumb.setText("Drop Breadcrumb");
-                    btn_drop_breadcrumb.setContentDescription("Drop Breadcrumb");
+                    tts.speak("Breadcrumb dropped",TextToSpeech.QUEUE_FLUSH,null,null);
+//                    btn_drop_breadcrumb.setContentDescription("Drop Breadcrumb");
                     isRecording=false;
                 }
                 break;
@@ -172,7 +175,7 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
                     saveRouteToFile(String.valueOf(System.currentTimeMillis()),audioPath);
 
                     btn_save_and_exit.setText("Finish Recording Name and Exit");
-                    btn_save_and_exit.setContentDescription("Finish Recording Name and Exit");
+//                    btn_save_and_exit.setContentDescription("Finish Recording Name and Exit");
                 }
                 else
                 {
@@ -247,6 +250,8 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
     @Override
     protected void onResume() {
 
+
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0.0f, locationListener);
         if(tts==null) {
             tts = new TextToSpeech(RecordingActivity.this, new TextToSpeech.OnInitListener() {
                 @Override
@@ -281,4 +286,9 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
     }
 
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mLocationManager.removeUpdates(locationListener);
+    }
 }

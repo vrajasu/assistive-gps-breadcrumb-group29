@@ -5,6 +5,8 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Environment;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
@@ -16,7 +18,10 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.google.android.gms.cast.LaunchOptions;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.pathfinder.Models.BreadCrumb;
@@ -35,8 +40,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //declaring Location provider to extact Latitude and Longitude.
 
     private FusedLocationProviderClient locationProviderClient;
-    //Declaring Text to speech engine to Welcome user and read out street name.
+    //Declaring Text to speech engine to read out street name.
     TextToSpeech tts;
+    LocationManager locationManager;
+    Location location;
+    boolean ttsInitialized=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +65,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.d("TTS", "Hello!1");
                 if (status != TextToSpeech.ERROR) {
                     tts.setLanguage(Locale.ENGLISH);
-                    tts.speak("Hello There, Welcome to Path Finder Home!", TextToSpeech.QUEUE_FLUSH, null, null);
+                    ttsInitialized=true;
+
                 }
             }
         });
@@ -68,8 +77,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_saved_route.setOnClickListener(this);
         btn_current_street.setOnClickListener(this);
 
-
-        locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 1.0f, locationListener,getMainLooper());
+//        locationProviderClient.requestLocationUpdates(new LocationRequest(),new LocationCallback(),null);
 
 
         //creating app storage directory on first app run
@@ -88,7 +101,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
 
+
+
     }
+    LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location loc) {
+            Log.d("Location updates",""+loc.getLatitude()+","+loc.getLongitude());
+            location = loc;
+        }
+
+        @Override
+        public void onStatusChanged(String s, int i, Bundle bundle) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String s) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String s) {
+
+        }
+    };
 
     //on click handlers for the button
     @Override
@@ -101,33 +138,48 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent);
                 break;
             case R.id.btn_saved_route:
-                intent = new Intent(MainActivity.this, AllRoutesActivity.class);
-                startActivity(intent);
+                if(location!=null) {
+                    intent = new Intent(MainActivity.this, AllRoutesActivity.class);
+                    startActivity(intent);
+                }
+                else {
+                    if (ttsInitialized) {
+                        tts.speak("Location Fix not acquired. Please try again in 2 seconds", TextToSpeech.QUEUE_FLUSH, null, null);
+                    }
+                }
             case R.id.btn_current_street:
                 getLocation();
                 break;
             case R.id.btn_edit_route:
-                intent = new Intent(MainActivity.this, AllRoutesActivity.class);
-                intent.putExtra("IS_EDIT", true);
-                startActivity(intent);
+                if(location!=null) {
+                    intent = new Intent(MainActivity.this, AllRoutesActivity.class);
+                    intent.putExtra("IS_EDIT", true);
+                    startActivity(intent);
+                }
+                else {
+                    if (ttsInitialized) {
+                        tts.speak("Location Fix not acquired. Please try again in 2 seconds", TextToSpeech.QUEUE_FLUSH, null, null);
+                    }
+                }
         }
     }
 
     //Fetches location and passes to getAddress method to retrieve a street name
     public void getLocation() {
         try {
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
+            if(location!=null)
+            {
+                String address = getLocationAddress(location.getLatitude(), location.getLongitude());
+                String speakingString = address+" with location accuracy "+location.getAccuracy()+" metres";
+                tts.speak(speakingString, TextToSpeech.QUEUE_FLUSH, null, null);
+                btn_current_street.setText(speakingString);
             }
-            locationProviderClient.getLastLocation().addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
-                @Override
-                public void onSuccess(Location location) {
-                    String address = getLocationAddress(location.getLatitude(), location.getLongitude());
-                    tts.speak(address, TextToSpeech.QUEUE_FLUSH, null, null);
-                    btn_current_street.setText(address);
+            else
+            {
+                tts.speak("Location Fix not acquired", TextToSpeech.QUEUE_FLUSH, null, null);
 
-                }
-            });
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -156,6 +208,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(tts !=null){
             tts.stop();
         }
+        locationManager.removeUpdates(locationListener);
         super.onPause();
     }
 
@@ -164,6 +217,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (tts != null) {
             tts.stop();
         }
+        locationManager.removeUpdates(locationListener);
         super.onStop();
     }
 
@@ -177,6 +231,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onResume()
     {
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 1.0f,locationListener);
         if(tts==null) {
             tts = new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
                 @Override
@@ -184,13 +239,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Log.d("TTS", "Hello2!");
                     if (status != TextToSpeech.ERROR) {
                         tts.setLanguage(Locale.ENGLISH);
-                        tts.speak("Hello There, Welcome to Path Finder Home!", TextToSpeech.QUEUE_FLUSH, null, null);
+                        ttsInitialized = true;
+
                     }
                 }
             });
         }
-        else
-            tts.speak("Hello There, Welcome to Path Finder Home!", TextToSpeech.QUEUE_FLUSH, null, null);
+
 
         super.onResume();
     }

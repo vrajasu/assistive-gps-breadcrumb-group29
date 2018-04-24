@@ -42,11 +42,13 @@ public class AllBreadcrumbsActivity extends AppCompatActivity {
     List<BreadCrumb> allBreadCrumbs = new ArrayList<>();
     Button btn_delete_route;
 
-    float thresholdDistance = 20.00f;
-    long updateTime = 10000;
-    long updateDistance = 10;
+    float thresholdDistanceBefore = 10.00f;
+    float thresholdDistanceAt = 10.00f;
+    long updateTime = 2000;
+    long updateDistance = 0;
     LocationManager mLocationManager = null;
-    boolean[] breadCrumbFinished;
+    boolean[] breadCrumbFinishedBeforePoint;
+    boolean[] breadCrumbFinishedAtPoint;
 
 
     MediaPlayer mediaPlayer;
@@ -119,18 +121,21 @@ public class AllBreadcrumbsActivity extends AppCompatActivity {
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         // initializing the adapter and then passing the Breadcrumb list
+//
+//        for (int i = 0; i < allBreadCrumbs.size(); i++) {
+//            Log.d("Bread Crumb", "" + allBreadCrumbs.get(i).getLatitude() + "," + allBreadCrumbs.get(i).getLongitude());
+//            float[] results = new float[1];
+//            Location.distanceBetween(allBreadCrumbs.get(i).getLatitude(), allBreadCrumbs.get(i).getLongitude(), allBreadCrumbs.get(0).getLatitude(), allBreadCrumbs.get(0).getLongitude(), results);
+//            Log.d("Distances", "" + results[0]);
+//        }
+        breadCrumbFinishedBeforePoint = new boolean[allBreadCrumbs.size()];
+        breadCrumbFinishedAtPoint = new boolean[allBreadCrumbs.size()];
 
-        for (int i = 0; i < allBreadCrumbs.size(); i++) {
-            Log.d("Bread Crumb", "" + allBreadCrumbs.get(i).getLatitude() + "," + allBreadCrumbs.get(i).getLongitude());
-            float[] results = new float[1];
-            Location.distanceBetween(allBreadCrumbs.get(i).getLatitude(), allBreadCrumbs.get(i).getLongitude(), allBreadCrumbs.get(0).getLatitude(), allBreadCrumbs.get(0).getLongitude(), results);
-            Log.d("Distances", "" + results[0]);
-        }
-        breadCrumbFinished = new boolean[allBreadCrumbs.size()];
-        Arrays.fill(breadCrumbFinished,false);
+        Arrays.fill(breadCrumbFinishedAtPoint,false);
+        Arrays.fill(breadCrumbFinishedBeforePoint,false);
 
 
-        mAdapter = new ListBreadCrumbAdapter(AllBreadcrumbsActivity.this, (List<BreadCrumb>) getIntent().getSerializableExtra("ALL_BREADCRUMBS"));
+        mAdapter = new ListBreadCrumbAdapter(AllBreadcrumbsActivity.this, allBreadCrumbs,isEditable,route_path,route_name_audio);
 
         mRecyclerView.setVisibility(View.VISIBLE);
         tv_no_info.setVisibility(View.GONE);
@@ -176,7 +181,7 @@ public class AllBreadcrumbsActivity extends AppCompatActivity {
         for(int i=0;i<allBreadCrumbs.size();i++)
         {
             Log.d("Accessing Path","true");
-            if(!breadCrumbFinished[i])
+            if(!breadCrumbFinishedBeforePoint[i])
             {
                 BreadCrumb bc = allBreadCrumbs.get(i);
                 float result[]=new float[1];
@@ -184,23 +189,58 @@ public class AllBreadcrumbsActivity extends AppCompatActivity {
                 if(result.length>0)
                 {
                     Log.d("Result for Breadcrummb",""+result[0]);
-                    if(result[0]<=thresholdDistance)
+                    if(result[0]<=thresholdDistanceBefore)
                     {
-                        playBreadcrumb(bc.getAudioPath()+".3gp");
-                        breadCrumbFinished[i]=true;
+                        if(i==allBreadCrumbs.size()-1)
+                            playBreadcrumb(bc.getAudioPath()+".3gp",bc.getStreetName(),true);
+                        else
+                            playBreadcrumb(bc.getAudioPath()+".3gp",bc.getStreetName(),false);
+                        breadCrumbFinishedBeforePoint[i]=true;
                         break;
                     }
                 }
             }
+            /*
+            else
+            {
+                if(!breadCrumbFinishedAtPoint[i])
+                {
+                    BreadCrumb bc = allBreadCrumbs.get(i);
+                    float result[]=new float[1];
+                    Location.distanceBetween(currentLocation.getLatitude(),currentLocation.getLongitude(),bc.getLatitude(),bc.getLongitude(),result);
+                    if(result.length>0)
+                    {
+                        Log.d("Result Breadcrummb 2",""+result[0]);
+                        if(result[0]<=thresholdDistanceAt)
+                        {
+                            if(i==allBreadCrumbs.size()-1)
+                                playBreadcrumb(bc.getAudioPath()+".3gp",bc.getStreetName(),true);
+                            else
+                                playBreadcrumb(bc.getAudioPath()+".3gp",bc.getStreetName(),false);
+                            breadCrumbFinishedAtPoint[i]=true;
+                            break;
+                        }
+                    }
+                }
+            }
+            */
 
         }
     }
-    private void playBreadcrumb(String route_name_path) {
+    private void playBreadcrumb(String route_name_path,String street_name,boolean isLast) {
         mediaPlayer = new MediaPlayer();
         try {
             mediaPlayer.setDataSource(route_name_path);
             mediaPlayer.prepare();
             mediaPlayer.start();
+            while(mediaPlayer.isPlaying())
+            {
+
+            }
+            tts.speak("The street for this breadcrumb is "+street_name, TextToSpeech.QUEUE_FLUSH, null, null);
+            if(isLast)
+                tts.speak("This was the last breadcrumb, you should reach your destination soon",TextToSpeech.QUEUE_FLUSH,null,null);
+
         } catch (Exception e) {
             Log.e("Media Play", "prepare() failed");
         }

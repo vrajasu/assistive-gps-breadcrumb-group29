@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dip"
+    android:weightSum="3">
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:text="Replace audio recording"
+        android:contentDescription="Replace audio recording"
+        android:id="@+id/btn_replace_breadcrumb"
+        android:textSize="30dp"
+        />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:text="Delete Breadcrumb"
+        android:contentDescription="Delete Breadcrumb"
+        android:id="@+id/btn_delete_breadcrumb"
+        android:textSize="30dp"
+        />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:text="Back"
+        android:contentDescription="Back"
+        android:id="@+id/btn_back"
+        android:textSize="30dp"
+        />
+</LinearLayout>

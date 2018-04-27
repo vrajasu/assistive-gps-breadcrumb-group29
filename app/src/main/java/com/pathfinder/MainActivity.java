@@ -22,6 +22,7 @@ import com.google.android.gms.cast.LaunchOptions;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.pathfinder.Models.BreadCrumb;
@@ -39,12 +40,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button btn_new_route, btn_edit_route, btn_saved_route, btn_current_street;
     //declaring Location provider to extact Latitude and Longitude.
 
-    private FusedLocationProviderClient locationProviderClient;
     //Declaring Text to speech engine to read out street name.
     TextToSpeech tts;
     LocationManager locationManager;
     Location location;
     boolean ttsInitialized=false;
+    LocationCallback mLocationCallBack;
+
+    FusedLocationProviderClient locationProviderClient;
+    LocationRequest locationRequest = new LocationRequest();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,13 +81,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_saved_route.setOnClickListener(this);
         btn_current_street.setOnClickListener(this);
 
+        locationRequest.setInterval(2000);
+        locationRequest.setFastestInterval(2000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+
+        locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+
+        mLocationCallBack = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+                for (Location loc : locationResult.getLocations()) {
+                    location = loc;
+                    Log.d("New Location Update",""+location.getLongitude()+":"+location.getLatitude());
+                    break;
+                }
+            }
+        };
+
+
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 1.0f, locationListener,getMainLooper());
+//        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 1.0f, locationListener,getMainLooper());
 //        locationProviderClient.requestLocationUpdates(new LocationRequest(),new LocationCallback(),null);
-
+        if(requestionLocationUpdates)
+        {
+            locationProviderClient.requestLocationUpdates(locationRequest,mLocationCallBack,null);
+        }
 
         //creating app storage directory on first app run
 
@@ -170,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if(location!=null)
             {
                 String address = getLocationAddress(location.getLatitude(), location.getLongitude());
-                String speakingString = address+" with location accuracy "+location.getAccuracy()+" metres";
+                String speakingString = address+" with location accuracy "+((int)(location.getAccuracy()*3.3))+" feet";
                 tts.speak(speakingString, TextToSpeech.QUEUE_FLUSH, null, null);
                 btn_current_street.setText(speakingString);
             }
@@ -194,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     latitude, longitude, 1);
             if (addressList != null && addressList.size() > 0) {
                 Address address = addressList.get(0);
-                return address.getThoroughfare();
+                return address.getAddressLine(0).split(",")[0];
             }
         } catch (IOException e) {
             Log.e("geo coder not working", "Unable connect to Geocoder", e);
@@ -208,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(tts !=null){
             tts.stop();
         }
-        locationManager.removeUpdates(locationListener);
+        locationProviderClient.removeLocationUpdates(mLocationCallBack);
         super.onPause();
     }
 
@@ -217,7 +246,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (tts != null) {
             tts.stop();
         }
-        locationManager.removeUpdates(locationListener);
         super.onStop();
     }
 
@@ -228,10 +256,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         super.onDestroy();
     }
+    boolean requestionLocationUpdates = true;
     @Override
     public void onResume()
     {
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 1.0f,locationListener);
+//        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 1.0f,locationListener);
         if(tts==null) {
             tts = new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
                 @Override
@@ -244,6 +273,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }
             });
+        }
+
+        if(requestionLocationUpdates)
+        {
+            locationProviderClient.requestLocationUpdates(locationRequest,mLocationCallBack,null);
         }
 
 

@@ -19,7 +19,7 @@
         android:id="@+id/btn_current_street"
         android:text="Current Street"
         android:contentDescription="Current Street"
-        android:textSize="30dp"
+        android:textSize="24dp"
         />
 
     <Button

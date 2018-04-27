@@ -19,6 +19,11 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.pathfinder.Adapters.ListBreadCrumbAdapter;
 import com.pathfinder.Adapters.ListRouteAdapter;
 import com.pathfinder.Models.BreadCrumb;
@@ -59,6 +64,9 @@ public class AllBreadcrumbsActivity extends AppCompatActivity {
     String fileLocationAudio= Environment.getExternalStorageDirectory()+ File.separator +"PathFinder"+ File.separator+"Audio"+File.separator;
     String fileLocationRoutes= Environment.getExternalStorageDirectory()+ File.separator +"PathFinder"+ File.separator+"Routes"+File.separator;
 
+    FusedLocationProviderClient locationProviderClient;
+    LocationRequest locationRequest = new LocationRequest();
+    LocationCallback mLocationCallBack;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +81,12 @@ public class AllBreadcrumbsActivity extends AppCompatActivity {
         allBreadCrumbs = (List<BreadCrumb>) getIntent().getSerializableExtra("ALL_BREADCRUMBS");
         route_path=getIntent().getStringExtra("ROUTE_PATH");
         route_name_audio=getIntent().getStringExtra("ROUTE_AUDIO_PATH");
+
+        locationRequest.setInterval(2000);
+        locationRequest.setFastestInterval(2000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+
+        locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
 
         if(isEditable)
@@ -143,37 +157,33 @@ public class AllBreadcrumbsActivity extends AppCompatActivity {
         mRecyclerView.setAdapter(mAdapter);
 
         if(!isEditable) {
-            mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
+            locationRequest.setInterval(2000);
+            locationRequest.setFastestInterval(2000);
+            locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, updateTime, updateDistance, locationListener);
+            locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+
+            mLocationCallBack = new LocationCallback() {
+                @Override
+                public void onLocationResult(LocationResult locationResult) {
+                    if (locationResult == null) {
+                        return;
+                    }
+                    for (Location loc : locationResult.getLocations()) {
+                        checkForBreadCrumb(loc);
+                        Log.d("New Location Update",""+loc.getLongitude()+":"+loc.getLatitude());
+                        break;
+                    }
+                }
+            };
+
         }
     }
-    LocationListener locationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-            Log.d("Location Update",""+location.getLongitude()+","+location.getLongitude());
-            checkForBreadCrumb(location);
-        }
-
-        @Override
-        public void onStatusChanged(String s, int i, Bundle bundle) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String s) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String s) {
-
-        }
-    };
 
     public void checkForBreadCrumb(Location currentLocation)
     {
@@ -248,8 +258,8 @@ public class AllBreadcrumbsActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        if(mLocationManager!=null)
-            mLocationManager.removeUpdates(locationListener);
+        if(locationProviderClient!=null && mLocationCallBack!=null)
+        locationProviderClient.removeLocationUpdates(mLocationCallBack);
         if(tts !=null){
             tts.stop();
         }
@@ -260,9 +270,8 @@ public class AllBreadcrumbsActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        if(mLocationManager!=null && !isEditable)
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,updateTime,updateDistance,locationListener);
-
+        if(!isEditable)
+             locationProviderClient.requestLocationUpdates(locationRequest,mLocationCallBack,null);
         if(tts==null) {
             tts = new TextToSpeech(AllBreadcrumbsActivity.this, new TextToSpeech.OnInitListener() {
                 @Override
@@ -273,6 +282,7 @@ public class AllBreadcrumbsActivity extends AppCompatActivity {
                 }
             });
         }
+
         MediaRecorderHelper.getInstance().pause();
         super.onResume();
 

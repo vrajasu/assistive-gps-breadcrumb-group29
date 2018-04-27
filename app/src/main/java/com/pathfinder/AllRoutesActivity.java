@@ -68,6 +68,7 @@ public class AllRoutesActivity extends AppCompatActivity {
         }
 
 
+
     }
     //retrieve all routes saved on device and populate a List of Route Objects
     public void retrieveAllRoutes()

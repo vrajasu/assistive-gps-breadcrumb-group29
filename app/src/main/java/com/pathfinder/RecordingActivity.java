@@ -40,7 +40,6 @@ import java.util.Locale;
 public class RecordingActivity extends AppCompatActivity implements View.OnClickListener {
 
     Button btn_drop_breadcrumb, btn_save_and_exit;
-    private FusedLocationProviderClient locationProviderClient;
     List<BreadCrumb> breadCrumbs = new ArrayList();
 
     //recording related variables
@@ -50,13 +49,12 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
     boolean isRecording = false;
     boolean isSaving=false;
     MediaRecorderHelper mediaRecorderHelper;
-    private LocationCallback mLocationCallback;
-    LocationManager mLocationManager;
     Location location=null;
     TextToSpeech tts;
     boolean ttsInitialized = false;
-
-
+    FusedLocationProviderClient locationProviderClient;
+    LocationRequest locationRequest = new LocationRequest();
+    LocationCallback mLocationCallBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,36 +82,32 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
         btn_drop_breadcrumb.setOnClickListener(this);
         btn_save_and_exit.setOnClickListener(this);
 
-        mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+//        mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+//
+//        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0.0f, locationListener);
+        locationRequest.setInterval(2000);
+        locationRequest.setFastestInterval(2000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0.0f, locationListener);
+        locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+
+        mLocationCallBack = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+                for (Location loc : locationResult.getLocations()) {
+                    location = loc;
+                    Log.d("New Location Update",""+location.getLongitude()+":"+location.getLatitude());
+                    break;
+                }
+            }
+        };
 
 
     }
-    public android.location.LocationListener locationListener = new android.location.LocationListener() {
-        @Override
-        public void onLocationChanged(Location loc) {
-            location = loc;
-            Log.d("Location Update",""+loc.getLatitude()+","+loc.getLongitude());
-        }
-
-        @Override
-        public void onStatusChanged(String s, int i, Bundle bundle) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String s) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String s) {
-
-        }
-    };
-
-
 
     @Override
     public void onClick(View view) {
@@ -251,7 +245,7 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
     protected void onResume() {
 
 
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0.0f, locationListener);
+//        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0.0f, locationListener);
         if(tts==null) {
             tts = new TextToSpeech(RecordingActivity.this, new TextToSpeech.OnInitListener() {
                 @Override
@@ -263,6 +257,7 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
                 }
             });
         }
+        locationProviderClient.requestLocationUpdates(locationRequest,mLocationCallBack,null);
         super.onResume();
 
     }
@@ -289,6 +284,7 @@ public class RecordingActivity extends AppCompatActivity implements View.OnClick
     @Override
     protected void onPause() {
         super.onPause();
-        mLocationManager.removeUpdates(locationListener);
+//        mLocationManager.removeUpdates(locationListener);
+        locationProviderClient.removeLocationUpdates(mLocationCallBack);
     }
 }
